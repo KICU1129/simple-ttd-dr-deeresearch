@@ -8,6 +8,7 @@ from mcp import stdio_client, StdioServerParameters
 import re
 import os
 from dotenv import load_dotenv
+load_dotenv()
 
 EVALUATION_PROMPT_TEMPLATE = """
 あなたは専門の評価者です。特定の基準に基づいて、与えられたテキストの品質を評価することがあなたのタスクです。
@@ -35,33 +36,6 @@ Comprehensiveness: [1-5]
 </scores>
 <feedback>...</feedback>
 """
-# 日本語訳:
-# You are an expert evaluator. Your task is to assess the quality of a given text based on specific criteria.
-#
-# **Criteria:**
-# - **Helpfulness:** Does the text directly address the user's intent? Is it accurate and easy to understand?
-# - **Comprehensiveness:** Is any key information missing?
-#
-# **User Query:**
-# {query}
-#
-# **Text to Evaluate:**
-# {text}
-#
-# **Instructions:**
-# First, provide your reasoning in a <thinking> block.
-# Then, provide a numerical score from 1 (worst) to 5 (best) for both Helpfulness and Comprehensiveness.
-# Finally, provide constructive feedback for improvement in a <feedback> block.
-#
-# **Output Format:**
-# <thinking>...</thinking>
-# <scores>
-# Helpfulness: [1-5]
-# Comprehensiveness: [1-5]
-# </scores>
-# <feedback>...</feedback>
-# """
-
 
 def evaluate_quality(query: str, text: str) -> dict:
     """
@@ -100,7 +74,6 @@ def get_tavily_mcp_client() -> MCPClient:
     process. It loads the TAVILY_API_KEY from the .env file and passes it
     as an environment variable to the server process.
     """
-    load_dotenv()
     tavily_api_key = os.getenv("TAVILY_API_KEY")
     if not tavily_api_key:
         raise ValueError("TAVILY_API_KEY not found in .env file.")

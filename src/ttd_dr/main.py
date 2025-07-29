@@ -8,10 +8,11 @@ import time
 from datetime import datetime
 from .controller import TTD_DR_Controller
 
+
 def setup_logging():
     """Configures the root logger."""
     logging.basicConfig(
-        level=logging.DEBUG,
+        level=logging.INFO,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         handlers=[
             logging.StreamHandler(),
@@ -24,6 +25,7 @@ def main():
     """
     Main function to run the TTD-DR controller from the command line.
     """
+    
     setup_logging()
     logger = logging.getLogger(__name__)
 
