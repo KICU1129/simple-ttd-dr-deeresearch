@@ -27,6 +27,8 @@ class ResearchState(BaseModel):
     draft: str = ""
     qa_history: List[QAPair] = Field(default_factory=list)
     final_report: str = ""
+    total_tokens: int = 0
+    citations: List[str] = Field(default_factory=list)
     
     # A temporary state to hold variants during the self-evolution process.
     # The key could be the stage name, e.g., "plan", "question".

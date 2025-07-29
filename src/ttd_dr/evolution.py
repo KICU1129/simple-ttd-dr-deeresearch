@@ -1,67 +1,58 @@
 """
 This module implements the Self-Evolution mechanism for TTD-DR components.
 """
-from typing import List, Callable
-from .state import EvolutionVariant
-from .tools import evaluate_quality
+from typing import Dict, Any
 
 class SelfEvolutionManager:
     """
-    Manages the self-evolution process for a given agent's output.
+    Manages the self-evolution process by deciding whether to continue
+    iterations based on evaluation scores and feedback.
     """
-    def __init__(
+    def __init__(self):
+        """
+        Initializes the manager. No specific parameters needed for this simple decision logic.
+        """
+        pass
+
+    def decide_evolution(
         self,
-        generation_agent_func: Callable,
-        revision_agent_func: Callable,
-        num_variants: int = 3,
-        num_evolutions: int = 1
-    ):
+        current_iteration: int,
+        max_iterations: int,
+        evaluation_scores: Dict[str, int],
+        feedback: str
+    ) -> bool:
         """
-        Initializes the manager.
+        Decides whether the self-evolution process should continue for another iteration.
 
         Args:
-            generation_agent_func: A function that returns a configured generation agent.
-            revision_agent_func: A function that returns a configured revision agent.
-            num_variants: The number of initial variants to generate.
-            num_evolutions: The number of evolution (revision) steps for each variant.
-        """
-        self.generation_agent_func = generation_agent_func
-        self.revision_agent_func = revision_agent_func
-        self.num_variants = num_variants
-        self.num_evolutions = num_evolutions
-
-    def run(self, query: str, context: str) -> str:
-        """
-        Runs the full self-evolution process.
-
-        Args:
-            query: The initial user query.
-            context: The context for the generation (e.g., plan, draft).
+            current_iteration: The current iteration number (1-indexed).
+            max_iterations: The maximum number of allowed iterations.
+            evaluation_scores: A dictionary containing 'helpfulness' and 'comprehensiveness' scores (1-5).
+            feedback: The feedback provided by the evaluator agent.
 
         Returns:
-            The best-evolved content.
+            True if evolution should continue, False otherwise.
         """
-        # 1. Generate initial variants
-        generation_agent = self.generation_agent_func()
-        variants = [
-            EvolutionVariant(content=generation_agent(context))
-            for _ in range(self.num_variants)
-        ]
+        print(f"Self-Evolution Decision for Iteration {current_iteration}:")
+        print(f"  Scores: Helpfulness={evaluation_scores['helpfulness']}, Comprehensiveness={evaluation_scores['comprehensiveness']}")
+        print(f"  Feedback: {feedback}")
 
-        # 2. Evolve each variant
-        for _ in range(self.num_evolutions):
-            revision_agent = self.revision_agent_func()
-            for variant in variants:
-                # Evaluate
-                eval_result = evaluate_quality(query=query, text=variant.content)
-                variant.fitness_score = (eval_result["helpfulness_score"] + eval_result["comprehensiveness_score"]) / 2
-                variant.feedback = eval_result["feedback"]
-
-                # Revise
-                revision_prompt = f"Based on the following feedback, revise the text.\n\nFeedback: {variant.feedback}\n\nOriginal Text:\n{variant.content}"
-                variant.content = revision_agent(revision_prompt)
-
-        # 3. Select the best variant
-        best_variant = max(variants, key=lambda v: v.fitness_score)
+        # Rule 1: Always continue if not at max iterations and scores are below a certain threshold
+        # This encourages more iterations if the quality is not yet high.
+        if current_iteration < max_iterations:
+            if evaluation_scores['helpfulness'] < 4 or evaluation_scores['comprehensiveness'] < 4:
+                print("  Decision: Continue (scores are not yet optimal).")
+                return True
+            else:
+                # If scores are good, but there's still specific feedback, consider continuing
+                # This is a simple heuristic; more complex logic could parse feedback for actionable items.
+                if "more detailed" in feedback.lower() or "missing" in feedback.lower():
+                    print("  Decision: Continue (scores are good but feedback suggests further refinement).")
+                    return True
+                else:
+                    print("  Decision: Stop (scores are good and feedback is general).")
+                    return False
         
-        return best_variant.content
+        # Rule 2: Stop if max iterations reached
+        print("  Decision: Stop (max iterations reached).")
+        return False
